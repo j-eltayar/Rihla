@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Rihla",
+    "slug": "Rihla",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/ios-splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#fffff0"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.Rihla"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ios-splash.png",
+        "backgroundColor": "#fffff0"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.Rihla"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps._some_id_here_"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d9193438-0e4d-4b63-ad9a-90dea465ba82"
+      }
+    }
+  }
+}
