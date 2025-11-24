@@ -1,12 +1,39 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 
 export default function Login({ navigation }) {
-  const handleLogin = () => {
-    // Navigate to home or main screen after login
-    // navigation.navigate('Home');
-    console.log('Login button pressed');
+  const GoogleLogin = async () => {
+    // check if users' device has google play services
+    await GoogleSignin.hasPlayServices();
+
+    // initiates signIn process
+    const userInfo = await GoogleSignin.signIn();
+    return userInfo;
+  };
+
+  const googleSignIn = async () => {
+    try {
+      const response = await GoogleLogin();
+
+      // retrieve user data
+      const { idToken, user } = response.data ?? {};
+      if (idToken) {
+        console.log('User signed in:', user);
+        // TODO: Server call to validate the token & process the user data for signing In
+        // await processUserData(idToken, user);
+        
+        // Navigate to home or main screen after successful login
+        // navigation.navigate('Home');
+      }
+    } catch (error) {
+      console.log('Error', error);
+    }
   };
 
   return (
@@ -24,9 +51,12 @@ export default function Login({ navigation }) {
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Your journey begins here</Text>
           
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Get Started</Text>
-          </TouchableOpacity>
+          <GoogleSigninButton 
+            style={styles.googleButton}
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Light}
+            onPress={googleSignIn}
+          />
         </View>
       </View>
       
@@ -71,22 +101,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     textAlign: 'center',
   },
-  loginButton: {
-    backgroundColor: '#A2C0B0',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 20,
-    minWidth: 250,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+  googleButton: {
+    width: 250,
+    height: 48,
   },
 });
