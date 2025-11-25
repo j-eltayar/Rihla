@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "com.anonymous.Rihla",
     "splash": {
       "image": "./assets/ios-splash.png",
       "resizeMode": "contain",
@@ -28,12 +29,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.816888747746-r3dsfs4fk63kqe72t5ppico00etmrp2e"
-        }
-      ]
+      "expo-web-browser"
     ],
     "extra": {
       "eas": {

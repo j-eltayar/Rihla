@@ -1,38 +1,44 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login({ navigation }) {
-  const GoogleLogin = async () => {
-    // check if users' device has google play services
-    await GoogleSignin.hasPlayServices();
+  const [userInfo, setUserInfo] = React.useState(null);
+  
+  const redirectUri = makeRedirectUri({
+    scheme: 'com.anonymous.Rihla',
+  });
 
-    // initiates signIn process
-    const userInfo = await GoogleSignin.signIn();
-    return userInfo;
-  };
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    iosClientId: '816888747746-r3dsfs4fk63kqe72t5ppico00etmrp2e.apps.googleusercontent.com',
+    androidClientId: '816888747746-e2uqjvq8b0d1popr4t1su4dombllrc6g.apps.googleusercontent.com',
+  });
+
+  React.useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      
+      fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: { Authorization: `Bearer ${authentication?.accessToken}` },
+      })
+        .then((res) => res.json())
+        .then((user) => {
+          setUserInfo(user);
+          navigation.navigate('Main', { userInfo: user });
+        });
+    }
+  }, [response]);
 
   const googleSignIn = async () => {
     try {
-      const response = await GoogleLogin();
-
-      // retrieve user data
-      const { idToken, user } = response.data ?? {};
-      if (idToken) {
-        console.log('User signed in:', user);
-        // TODO: Server call to validate the token & process the user data for signing In
-        // await processUserData(idToken, user);
-        
-        // Navigate to home or main screen after successful login
-        // navigation.navigate('Home');
-      }
+      await promptAsync();
     } catch (error) {
-      console.log('Error', error);
+      console.log('Error during sign in:', error);
     }
   };
 
@@ -51,12 +57,17 @@ export default function Login({ navigation }) {
           <Text style={styles.title}>Welcome</Text>
           <Text style={styles.subtitle}>Your journey begins here</Text>
           
-          <GoogleSigninButton 
+          <TouchableOpacity 
             style={styles.googleButton}
-            size={GoogleSigninButton.Size.Wide}
-            color={GoogleSigninButton.Color.Light}
             onPress={googleSignIn}
-          />
+            disabled={!request}
+          >
+            <Image 
+              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+              style={styles.googleIcon}
+            />
+            <Text style={styles.googleButtonText}>Sign in with Google</Text>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -102,7 +113,30 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   googleButton: {
-    width: 250,
-    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 4,
+    minWidth: 250,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 12,
+  },
+  googleButtonText: {
+    color: '#757575',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
