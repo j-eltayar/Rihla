@@ -1,36 +1,203 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 export default function Landing({ route }) {
   const { userInfo } = route.params;
 
-  React.useEffect(() => {
-    console.log('User Info:', userInfo);
-  }, []);
+  // Custom map style - WY (Clean monochrome style)
+  const customMapStyle = [
+    {
+      "featureType": "all",
+      "elementType": "geometry.fill",
+      "stylers": [
+        {
+          "weight": "2.00"
+        }
+      ]
+    },
+    {
+      "featureType": "all",
+      "elementType": "geometry.stroke",
+      "stylers": [
+        {
+          "color": "#9c9c9c"
+        }
+      ]
+    },
+    {
+      "featureType": "all",
+      "elementType": "labels.text",
+      "stylers": [
+        {
+          "visibility": "on"
+        }
+      ]
+    },
+    {
+      "featureType": "landscape",
+      "elementType": "all",
+      "stylers": [
+        {
+          "color": "#f2f2f2"
+        }
+      ]
+    },
+    {
+      "featureType": "landscape",
+      "elementType": "geometry.fill",
+      "stylers": [
+        {
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "featureType": "landscape.man_made",
+      "elementType": "geometry.fill",
+      "stylers": [
+        {
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "featureType": "poi",
+      "elementType": "all",
+      "stylers": [
+        {
+          "visibility": "off"
+        }
+      ]
+    },
+    {
+      "featureType": "road",
+      "elementType": "all",
+      "stylers": [
+        {
+          "saturation": -100
+        },
+        {
+          "lightness": 45
+        }
+      ]
+    },
+    {
+      "featureType": "road",
+      "elementType": "geometry.fill",
+      "stylers": [
+        {
+          "color": "#eeeeee"
+        }
+      ]
+    },
+    {
+      "featureType": "road",
+      "elementType": "labels.text.fill",
+      "stylers": [
+        {
+          "color": "#7b7b7b"
+        }
+      ]
+    },
+    {
+      "featureType": "road",
+      "elementType": "labels.text.stroke",
+      "stylers": [
+        {
+          "color": "#ffffff"
+        }
+      ]
+    },
+    {
+      "featureType": "road.highway",
+      "elementType": "all",
+      "stylers": [
+        {
+          "visibility": "simplified"
+        }
+      ]
+    },
+    {
+      "featureType": "road.arterial",
+      "elementType": "labels.icon",
+      "stylers": [
+        {
+          "visibility": "off"
+        }
+      ]
+    },
+    {
+      "featureType": "transit",
+      "elementType": "all",
+      "stylers": [
+        {
+          "visibility": "off"
+        }
+      ]
+    },
+    {
+      "featureType": "water",
+      "elementType": "all",
+      "stylers": [
+        {
+          "color": "#46bcec"
+        },
+        {
+          "visibility": "on"
+        }
+      ]
+    },
+    {
+      "featureType": "water",
+      "elementType": "geometry.fill",
+      "stylers": [
+        {
+          "color": "#c8d7d4"
+        }
+      ]
+    },
+    {
+      "featureType": "water",
+      "elementType": "labels.text.fill",
+      "stylers": [
+        {
+          "color": "#070707"
+        }
+      ]
+    },
+    {
+      "featureType": "water",
+      "elementType": "labels.text.stroke",
+      "stylers": [
+        {
+          "color": "#ffffff"
+        }
+      ]
+    }
+  ];
 
   return (
     <View style={styles.container}>
-      <View style={styles.centerContent}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/ios-splash.png')} 
-            style={styles.logo} 
-            resizeMode="contain" 
-          />
-        </View>
-        
-        <View style={styles.userInfoContainer}>
-          <Text style={styles.welcomeText}>Hello, {userInfo.name}! 👋</Text>
-          <Text style={styles.emailText}>{userInfo.email}</Text>
-          {userInfo.picture && (
-            <Image 
-              source={{ uri: userInfo.picture }} 
-              style={styles.profilePicture}
-            />
-          )}
-        </View>
-      </View>
+      <MapView
+        provider={PROVIDER_GOOGLE}
+        style={styles.map}
+        mapType="standard" // Options: "standard", "satellite", "hybrid", "terrain"
+        customMapStyle={customMapStyle} // Apply custom styling
+        initialRegion={{
+          latitude: 45.5017,
+          longitude: -73.5673,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
+      >
+        <Marker
+          coordinate={{ latitude: 45.5017, longitude: -73.5673 }}
+          title="Montreal"
+          description="Welcome to Montreal"
+        />
+      </MapView>
       
       <StatusBar style="auto" />
     </View>
@@ -40,41 +207,9 @@ export default function Landing({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fffff0',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  centerContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  logo: {
-    width: 400,
-    height: 400,
-  },
-  userInfoContainer: {
-    alignItems: 'center',
-    padding: 20,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#A2C0B0',
-    marginBottom: 10,
-  },
-  emailText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 20,
-  },
-  profilePicture: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginTop: 10,
+  map: {
+    width: '100%',
+    height: '100%',
   },
 });

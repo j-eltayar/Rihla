@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Login from './screens/Login';
 import Landing from './screens/Landing';
 import List from './screens/List';
@@ -22,7 +23,7 @@ function MainTabs({ route }) {
           let iconName;
 
           if (route.name === 'Landing') {
-            iconName = focused ? 'home' : 'home-outline';
+            iconName = focused ? 'location' : 'location-outline';
           } else if (route.name === 'List') {
             iconName = focused ? 'list' : 'list-outline';
           } else if (route.name === 'Profile') {
@@ -33,6 +34,7 @@ function MainTabs({ route }) {
         },
         tabBarActiveTintColor: '#A2C0B0',
         tabBarInactiveTintColor: 'gray',
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#fffff0',
           borderTopColor: '#ddd',
@@ -43,18 +45,15 @@ function MainTabs({ route }) {
         name="Landing" 
         component={Landing}
         initialParams={{ userInfo }}
-        options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen 
         name="List" 
         component={List}
-        options={{ tabBarLabel: 'List' }}
       />
       <Tab.Screen 
         name="Profile" 
         component={Profile}
         initialParams={{ userInfo }}
-        options={{ tabBarLabel: 'Profile' }}
       />
     </Tab.Navigator>
   );
@@ -62,16 +61,31 @@ function MainTabs({ route }) {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="Login"
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Main" component={MainTabs} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Login"
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: false, // Disable swipe back gesture
+          }}
+        >
+          <Stack.Screen 
+            name="Login" 
+            component={Login}
+            options={{
+              gestureEnabled: true, // Allow swipe on login screen only
+            }}
+          />
+          <Stack.Screen 
+            name="Main" 
+            component={MainTabs}
+            options={{
+              gestureEnabled: false, // Prevent swipe back to login
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }

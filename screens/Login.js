@@ -1,14 +1,16 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login({ navigation }) {
   const [userInfo, setUserInfo] = React.useState(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   
   const redirectUri = makeRedirectUri({
     scheme: 'com.anonymous.Rihla',
@@ -19,6 +21,26 @@ export default function Login({ navigation }) {
     androidClientId: '816888747746-e2uqjvq8b0d1popr4t1su4dombllrc6g.apps.googleusercontent.com',
   });
 
+  // Check for saved user info on mount
+  React.useEffect(() => {
+    checkStoredUser();
+  }, []);
+
+  const checkStoredUser = async () => {
+    try {
+      const storedUserInfo = await AsyncStorage.getItem('userInfo');
+      if (storedUserInfo) {
+        const user = JSON.parse(storedUserInfo);
+        setUserInfo(user);
+        navigation.replace('Main', { userInfo: user });
+      }
+    } catch (error) {
+      console.error('Error loading stored user:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     if (response?.type === 'success') {
       const { authentication } = response;
@@ -27,9 +49,11 @@ export default function Login({ navigation }) {
         headers: { Authorization: `Bearer ${authentication?.accessToken}` },
       })
         .then((res) => res.json())
-        .then((user) => {
+        .then(async (user) => {
           setUserInfo(user);
-          navigation.navigate('Main', { userInfo: user });
+          // Save user info to AsyncStorage
+          await AsyncStorage.setItem('userInfo', JSON.stringify(user));
+          navigation.replace('Main', { userInfo: user });
         });
     }
   }, [response]);
@@ -44,32 +68,36 @@ export default function Login({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.centerContent}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/ios-splash.png')} 
-            style={styles.logo} 
-            resizeMode="contain" 
-          />
-        </View>
-        
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>Welcome</Text>
-          <Text style={styles.subtitle}>Your journey begins here</Text>
-          
-          <TouchableOpacity 
-            style={styles.googleButton}
-            onPress={googleSignIn}
-            disabled={!request}
-          >
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#A2C0B0" />
+      ) : (
+        <View style={styles.centerContent}>
+          <View style={styles.logoContainer}>
             <Image 
-              source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
-              style={styles.googleIcon}
+              source={require('../assets/ios-splash.png')} 
+              style={styles.logo} 
+              resizeMode="contain" 
             />
-            <Text style={styles.googleButtonText}>Sign in with Google</Text>
-          </TouchableOpacity>
+          </View>
+          
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>Welcome</Text>
+            <Text style={styles.subtitle}>Your journey begins here</Text>
+            
+            <TouchableOpacity 
+              style={styles.googleButton}
+              onPress={googleSignIn}
+              disabled={!request}
+            >
+              <Image 
+                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg' }}
+                style={styles.googleIcon}
+              />
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
       
       <StatusBar style="auto" />
     </View>

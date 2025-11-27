@@ -4,7 +4,7 @@
     "slug": "Rihla",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/ios-splash.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "scheme": "com.anonymous.Rihla",
@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Rihla"
+      "bundleIdentifier": "com.anonymous.Rihla",
+      "icon": "./assets/ios-splash.png",
+      "backgroundColor": "#fffff0",
+      "config": {
+        "googleMapsApiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +28,12 @@
         "backgroundColor": "#fffff0"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Rihla"
+      "package": "com.anonymous.Rihla",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
