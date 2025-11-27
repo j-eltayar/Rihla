@@ -3,9 +3,12 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, Alert } from 'react-na
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { UserInfoContext } from '../contexts/UserInfoContext';
 
 export default function Profile({ route }) {
-  const { userInfo } = route.params || {};
+  const userInfoFromContext = React.useContext(UserInfoContext);
+  const userInfoFromRoute = route.params?.userInfo;
+  const userInfo = userInfoFromRoute || userInfoFromContext;
   const navigation = useNavigation();
 
   const handleLogout = async () => {

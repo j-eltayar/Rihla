@@ -2,9 +2,12 @@ import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { UserInfoContext } from '../contexts/UserInfoContext';
 
 export default function Landing({ route }) {
-  const { userInfo } = route.params;
+  const userInfoFromContext = React.useContext(UserInfoContext);
+  const userInfoFromRoute = route.params?.userInfo;
+  const userInfo = userInfoFromRoute || userInfoFromContext;
 
   // Custom map style - WY (Clean monochrome style)
   const customMapStyle = [

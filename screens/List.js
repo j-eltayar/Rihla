@@ -5,48 +5,88 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, Easing } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
-const SWIPE_THRESHOLD = -80;
 const SWIPE_WIDTH = 150;
 
-const SwipeableListItem = ({ item, onEdit, onDelete, onPress }) => {
+const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) => {
   const translateX = useSharedValue(0);
   const [isOpen, setIsOpen] = React.useState(false);
+  const isOpenShared = useSharedValue(0);
+  const didSwipe = useSharedValue(false);
+
+  const closeRow = React.useCallback(() => {
+    translateX.value = withTiming(0, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+    isOpenShared.value = 0;
+    setIsOpen(false);
+    if (onOpenChange) {
+      onOpenChange(item.id, false, null);
+    }
+  }, [item.id, onOpenChange]);
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
+    .minDistance(0)
+    .activeOffsetX([-1, 10000])
+    .shouldCancelWhenOutside(false)
+    .onStart(() => {
+      didSwipe.value = false;
+    })
     .onUpdate((event) => {
-      const newTranslateX = event.translationX + (isOpen ? -SWIPE_WIDTH : 0);
-      if (newTranslateX <= 0 && newTranslateX >= -SWIPE_WIDTH) {
-        translateX.value = newTranslateX;
+      if (event.translationX < 0 || (event.translationX > 0 && isOpenShared.value === 1)) {
+        didSwipe.value = true;
+        const newTranslateX = event.translationX + (isOpenShared.value === 1 ? -SWIPE_WIDTH : 0);
+        if (newTranslateX <= 0 && newTranslateX >= -SWIPE_WIDTH) {
+          translateX.value = newTranslateX;
+        } else if (newTranslateX > 0) {
+          translateX.value = 0;
+        }
       }
     })
-    .onEnd(() => {
-      if (translateX.value < SWIPE_THRESHOLD) {
+    .onEnd((event) => {
+      const shouldOpen = translateX.value < -SWIPE_WIDTH * 0.6;
+      
+      if (shouldOpen) {
+        translateX.value = -SWIPE_WIDTH;
+        isOpenShared.value = 1;
+        runOnJS(setIsOpen)(true);
+        if (onOpenChange) {
+          runOnJS(onOpenChange)(item.id, true, closeRow);
+        }
+      } else {
+        translateX.value = 0;
+        isOpenShared.value = 0;
+        runOnJS(setIsOpen)(false);
+        if (onOpenChange) {
+          runOnJS(onOpenChange)(item.id, false, null);
+        }
+      }
+    })
+    .onFinalize((event) => {
+      if (isOpenShared.value === 1) {
         translateX.value = withTiming(-SWIPE_WIDTH, {
           duration: 200,
           easing: Easing.out(Easing.ease),
         });
-        runOnJS(setIsOpen)(true);
       } else {
         translateX.value = withTiming(0, {
           duration: 200,
           easing: Easing.out(Easing.ease),
         });
-        runOnJS(setIsOpen)(false);
       }
     });
+
+  // Create a tap gesture to block page swipes completely when touching list item
+  const blockingGesture = Gesture.Tap()
+    .maxDuration(100000) // Very long duration to capture the entire touch
+    .shouldCancelWhenOutside(false);
+
+  // Combine gestures - the pan takes priority, but both block external gestures
+  const combinedGesture = Gesture.Exclusive(panGesture, blockingGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
-
-  const closeRow = () => {
-    translateX.value = withTiming(0, {
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-    });
-    setIsOpen(false);
-  };
 
   return (
     <View style={styles.swipeContainer}>
@@ -73,11 +113,15 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress }) => {
         </TouchableOpacity>
       </View>
       
-      <GestureDetector gesture={panGesture}>
+      <GestureDetector gesture={combinedGesture}>
         <Animated.View style={[styles.listItem, animatedStyle]}>
           <TouchableOpacity 
             style={styles.listItemContent}
             onPress={() => {
+              if (didSwipe.value) {
+                return;
+              }
+              
               if (isOpen) {
                 closeRow();
               } else {
@@ -103,7 +147,7 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress }) => {
   );
 };
 
-export default function List() {
+export default function List({ navigation }) {
   const [lists, setLists] = React.useState([
     { id: '1', name: 'Sample List 1', itemCount: 5, icon: '🍕' },
     { id: '2', name: 'Sample List 2', itemCount: 3, icon: '🍜' },
@@ -115,8 +159,24 @@ export default function List() {
   const [editListName, setEditListName] = React.useState('');
   const [selectedIcon, setSelectedIcon] = React.useState('🍕');
   const [searchQuery, setSearchQuery] = React.useState('');
+  const openItemCallbacks = React.useRef({});
 
   const foodEmojis = ['🍕', '🍔', '🍟', '🌭', '🍿', '🧂', '🥓', '🥚', '🍳', '🧇', '🥞', '🧈', '🍞', '🥐', '🥨', '🥯', '🥖', '🫓', '🥗', '🥙', '🥪', '🌮', '🌯', '🫔', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🫘', '🍯', '🥛', '🍼', '🫖', '☕', '🍵', '🧃', '🥤', '🧋', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🍾', '🧊', '🥄', '🍴', '🍽️'];
+
+  const closeAllItems = () => {
+    Object.values(openItemCallbacks.current).forEach(callback => {
+      if (callback) callback();
+    });
+    openItemCallbacks.current = {};
+  };
+
+  // Close items when navigating away
+  React.useEffect(() => {
+    const unsubscribe = navigation?.addListener('blur', () => {
+      closeAllItems();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const filteredLists = lists.filter(list =>
     list.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -185,16 +245,38 @@ export default function List() {
     );
   };
 
-  const renderListItem = ({ item }) => (
-    <SwipeableListItem
-      item={item}
-      onEdit={handleEditList}
-      onDelete={handleDeleteList}
-      onPress={(item) => {
-        Alert.alert('Coming Soon', `Opening "${item.name}"`);
-      }}
-    />
-  );
+  const renderListItem = ({ item }) => {
+    return (
+      <SwipeableListItem
+        item={item}
+        onEdit={(item) => {
+          handleEditList(item);
+        }}
+        onDelete={(itemId) => {
+          handleDeleteList(itemId);
+        }}
+        onPress={(item) => {
+          closeAllItems();
+          Alert.alert('Coming Soon', `Opening "${item.name}"`);
+        }}
+        onOpenChange={(itemId, isOpen, closeCallback) => {
+          if (isOpen) {
+            // Close all other items first
+            Object.entries(openItemCallbacks.current).forEach(([id, callback]) => {
+              if (id !== itemId && callback) {
+                callback();
+              }
+            });
+            // Register this item's close callback
+            openItemCallbacks.current[itemId] = closeCallback;
+          } else {
+            // Remove this item's callback when closed
+            delete openItemCallbacks.current[itemId];
+          }
+        }}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -203,13 +285,19 @@ export default function List() {
         <View style={styles.headerButtons}>
           <TouchableOpacity
             style={styles.shareButton}
-            onPress={() => Alert.alert('Share', 'Share functionality coming soon!')}
+            onPress={() => {
+              closeAllItems();
+              Alert.alert('Share', 'Share functionality coming soon!');
+            }}
           >
             <Ionicons name="share-outline" size={24} color="#A2C0B0" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => setModalVisible(true)}
+            onPress={() => {
+              closeAllItems();
+              setModalVisible(true);
+            }}
           >
             <Ionicons name="add" size={28} color="#fff" />
           </TouchableOpacity>
@@ -223,6 +311,7 @@ export default function List() {
           placeholder="Search lists..."
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onFocus={closeAllItems}
           placeholderTextColor="#999"
         />
         {searchQuery.length > 0 && (
@@ -244,6 +333,8 @@ export default function List() {
           renderItem={renderListItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContainer}
+          onScroll={closeAllItems}
+          scrollEventThrottle={16}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="search-outline" size={80} color="#ddd" />
