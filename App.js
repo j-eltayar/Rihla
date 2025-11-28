@@ -5,32 +5,63 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { UserInfoContext } from './contexts/UserInfoContext';
+import { AppDataProvider } from './contexts/UserInfoContext';
 import Login from './screens/Login';
 import Landing from './screens/Landing';
 import List from './screens/List';
+import Locations from './screens/Locations';
 import Profile from './screens/Profile';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
+const ListStack = createNativeStackNavigator();
+
+function ListStackNavigator() {
+  return (
+    <ListStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        animation: 'slide_from_right',
+      }}
+    >
+      <ListStack.Screen 
+        name="ListMain" 
+        component={List}
+      />
+      <ListStack.Screen 
+        name="Locations" 
+        component={Locations}
+        options={{
+          gestureEnabled: true,
+          fullScreenGestureEnabled: true,
+        }}
+      />
+    </ListStack.Navigator>
+  );
+}
 
 function MainTabs({ route, navigation }) {
   const { userInfo } = route.params || {};
 
   return (
-    <UserInfoContext.Provider value={userInfo}>
-      <Tab.Navigator
-        tabBarPosition="bottom"
+    <Tab.Navigator
+      tabBarPosition="bottom"
         screenOptions={{
           tabBarShowLabel: false,
           tabBarIndicatorStyle: { 
-            backgroundColor: '#A2C0B0',
-            height: 3,
+            backgroundColor: 'transparent',
+            height: 0,
           },
           tabBarStyle: {
             backgroundColor: '#fffff0',
-            borderTopWidth: 1,
-            borderTopColor: '#ddd',
+            borderTopWidth: 0.5,
+            borderTopColor: '#e0e0e0',
+            height: 85,
+            paddingBottom: 30,
+            paddingTop: 5,
+            elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarActiveTintColor: '#A2C0B0',
           tabBarInactiveTintColor: 'gray',
@@ -46,7 +77,7 @@ function MainTabs({ route, navigation }) {
               iconName = focused ? 'person' : 'person-outline';
             }
 
-            return <Ionicons name={iconName} size={24} color={color} />;
+            return <Ionicons name={iconName} size={26} color={color} />;
           },
         }}
         swipeEnabled={true}
@@ -59,16 +90,16 @@ function MainTabs({ route, navigation }) {
           initialParams={{ userInfo }}
           options={{
             tabBarIcon: ({ focused, color }) => (
-              <Ionicons name={focused ? 'location' : 'location-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'location' : 'location-outline'} size={26} color={color} />
             ),
           }}
         />
         <Tab.Screen 
           name="List"
-          component={List}
+          component={ListStackNavigator}
           options={{
             tabBarIcon: ({ focused, color }) => (
-              <Ionicons name={focused ? 'list' : 'list-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'list' : 'list-outline'} size={26} color={color} />
             ),
           }}
         />
@@ -78,42 +109,45 @@ function MainTabs({ route, navigation }) {
           initialParams={{ userInfo }}
           options={{
             tabBarIcon: ({ focused, color }) => (
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={26} color={color} />
             ),
           }}
         />
       </Tab.Navigator>
-    </UserInfoContext.Provider>
   );
 }
 
 export default function App() {
+  const [userInfo, setUserInfo] = React.useState(null);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Login"
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: false, // Disable swipe back gesture
-          }}
-        >
-          <Stack.Screen 
-            name="Login" 
-            component={Login}
-            options={{
-              gestureEnabled: true, // Allow swipe on login screen only
+      <AppDataProvider initialUserInfo={userInfo}>
+        <NavigationContainer>
+          <Stack.Navigator
+            initialRouteName="Login"
+            screenOptions={{
+              headerShown: false,
+              gestureEnabled: false, // Disable swipe back gesture
             }}
-          />
-          <Stack.Screen 
-            name="Main" 
-            component={MainTabs}
-            options={{
-              gestureEnabled: false, // Prevent swipe back to login
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+          >
+            <Stack.Screen 
+              name="Login" 
+              component={Login}
+              options={{
+                gestureEnabled: true, // Allow swipe on login screen only
+              }}
+            />
+            <Stack.Screen 
+              name="Main" 
+              component={MainTabs}
+              options={{
+                gestureEnabled: false, // Prevent swipe back to login
+              }}
+            />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AppDataProvider>
     </GestureHandlerRootView>
   );
 }

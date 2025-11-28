@@ -2,28 +2,29 @@ import React from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, runOnJS, runOnUI, Easing } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { useAppData } from '../contexts/UserInfoContext';
 
 const SWIPE_WIDTH = 150;
 
-const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) => {
+const SwipeableListItem = ({ item, onEdit, onDelete, onPress, openItemId, setOpenItemId }) => {
   const translateX = useSharedValue(0);
-  const [isOpen, setIsOpen] = React.useState(false);
   const isOpenShared = useSharedValue(0);
   const didSwipe = useSharedValue(false);
 
-  const closeRow = React.useCallback(() => {
-    translateX.value = withTiming(0, {
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-    });
-    isOpenShared.value = 0;
-    setIsOpen(false);
-    if (onOpenChange) {
-      onOpenChange(item.id, false, null);
+  // Close this item when openItemId changes to something else or null
+  React.useEffect(() => {
+    if (openItemId !== item.id) {
+      // Close this item
+      translateX.value = withTiming(0, {
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+      });
+      isOpenShared.value = 0;
+      didSwipe.value = false; // Reset didSwipe when closing
     }
-  }, [item.id, onOpenChange]);
+  }, [openItemId, item.id]);
 
   const panGesture = Gesture.Pan()
     .minDistance(0)
@@ -49,17 +50,12 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) =>
       if (shouldOpen) {
         translateX.value = -SWIPE_WIDTH;
         isOpenShared.value = 1;
-        runOnJS(setIsOpen)(true);
-        if (onOpenChange) {
-          runOnJS(onOpenChange)(item.id, true, closeRow);
-        }
+        runOnJS(setOpenItemId)(item.id);
       } else {
         translateX.value = 0;
         isOpenShared.value = 0;
-        runOnJS(setIsOpen)(false);
-        if (onOpenChange) {
-          runOnJS(onOpenChange)(item.id, false, null);
-        }
+        didSwipe.value = false; // Reset didSwipe when closing
+        runOnJS(setOpenItemId)(null);
       }
     })
     .onFinalize((event) => {
@@ -94,7 +90,7 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) =>
         <TouchableOpacity
           style={[styles.actionButton, styles.editButton]}
           onPress={() => {
-            closeRow();
+            setOpenItemId(null);
             setTimeout(() => onEdit(item), 300);
           }}
         >
@@ -104,7 +100,7 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) =>
         <TouchableOpacity
           style={[styles.actionButton, styles.deleteButton]}
           onPress={() => {
-            closeRow();
+            setOpenItemId(null);
             setTimeout(() => onDelete(item.id), 300);
           }}
         >
@@ -122,15 +118,15 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) =>
                 return;
               }
               
-              if (isOpen) {
-                closeRow();
+              if (openItemId === item.id) {
+                setOpenItemId(null);
               } else {
                 onPress(item);
               }
             }}
             activeOpacity={0.8}
           >
-            <View style={styles.listIconContainer}>
+            <View style={[styles.listIconContainer, { backgroundColor: item.color || '#f0f8f5' }]}>
               <Text style={styles.listEmoji}>{item.icon || '🍕'}</Text>
             </View>
             <View style={styles.listInfo}>
@@ -148,27 +144,30 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, onOpenChange }) =>
 };
 
 export default function List({ navigation }) {
-  const [lists, setLists] = React.useState([
-    { id: '1', name: 'Sample List 1', itemCount: 5, icon: '🍕' },
-    { id: '2', name: 'Sample List 2', itemCount: 3, icon: '🍜' },
-  ]);
+  const {
+    lists,
+    addList,
+    updateList,
+    deleteList,
+    foodEmojis,
+    pastelColors,
+  } = useAppData();
+
   const [modalVisible, setModalVisible] = React.useState(false);
   const [editModalVisible, setEditModalVisible] = React.useState(false);
   const [newListName, setNewListName] = React.useState('');
+  const [newListIcon, setNewListIcon] = React.useState('🍕');
+  const [newListColor, setNewListColor] = React.useState('#A2C0B0');
   const [editingList, setEditingList] = React.useState(null);
   const [editListName, setEditListName] = React.useState('');
   const [selectedIcon, setSelectedIcon] = React.useState('🍕');
+  const [selectedColor, setSelectedColor] = React.useState('#A2C0B0');
   const [searchQuery, setSearchQuery] = React.useState('');
-  const openItemCallbacks = React.useRef({});
+  const [openItemId, setOpenItemId] = React.useState(null);
 
-  const foodEmojis = ['🍕', '🍔', '🍟', '🌭', '🍿', '🧂', '🥓', '🥚', '🍳', '🧇', '🥞', '🧈', '🍞', '🥐', '🥨', '🥯', '🥖', '🫓', '🥗', '🥙', '🥪', '🌮', '🌯', '🫔', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🥟', '🍤', '🍙', '🍚', '🍘', '🍥', '🥠', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🫘', '🍯', '🥛', '🍼', '🫖', '☕', '🍵', '🧃', '🥤', '🧋', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🧉', '🍾', '🧊', '🥄', '🍴', '🍽️'];
-
-  const closeAllItems = () => {
-    Object.values(openItemCallbacks.current).forEach(callback => {
-      if (callback) callback();
-    });
-    openItemCallbacks.current = {};
-  };
+  const closeAllItems = React.useCallback(() => {
+    setOpenItemId(null);
+  }, []);
 
   // Close items when navigating away
   React.useEffect(() => {
@@ -188,15 +187,10 @@ export default function List({ navigation }) {
       return;
     }
 
-    const newList = {
-      id: Date.now().toString(),
-      name: newListName.trim(),
-      itemCount: 0,
-      icon: '🍕',
-    };
-
-    setLists([...lists, newList]);
+    addList(newListName, newListIcon, newListColor);
     setNewListName('');
+    setNewListIcon('🍕');
+    setNewListColor('#A2C0B0');
     setModalVisible(false);
   };
 
@@ -204,6 +198,7 @@ export default function List({ navigation }) {
     setEditingList(list);
     setEditListName(list.name);
     setSelectedIcon(list.icon || '🍕');
+    setSelectedColor(list.color || '#A2C0B0');
     setEditModalVisible(true);
   };
 
@@ -213,11 +208,11 @@ export default function List({ navigation }) {
       return;
     }
 
-    setLists(lists.map(list => 
-      list.id === editingList.id 
-        ? { ...list, name: editListName.trim(), icon: selectedIcon }
-        : list
-    ));
+    updateList(editingList.id, {
+      name: editListName.trim(),
+      icon: selectedIcon,
+      color: selectedColor,
+    });
     setEditModalVisible(false);
     setEditingList(null);
     setEditListName('');
@@ -238,7 +233,7 @@ export default function List({ navigation }) {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            setLists(lists.filter(list => list.id !== listId));
+            deleteList(listId);
           },
         },
       ],
@@ -249,6 +244,8 @@ export default function List({ navigation }) {
     return (
       <SwipeableListItem
         item={item}
+        openItemId={openItemId}
+        setOpenItemId={setOpenItemId}
         onEdit={(item) => {
           handleEditList(item);
         }}
@@ -257,22 +254,7 @@ export default function List({ navigation }) {
         }}
         onPress={(item) => {
           closeAllItems();
-          Alert.alert('Coming Soon', `Opening "${item.name}"`);
-        }}
-        onOpenChange={(itemId, isOpen, closeCallback) => {
-          if (isOpen) {
-            // Close all other items first
-            Object.entries(openItemCallbacks.current).forEach(([id, callback]) => {
-              if (id !== itemId && callback) {
-                callback();
-              }
-            });
-            // Register this item's close callback
-            openItemCallbacks.current[itemId] = closeCallback;
-          } else {
-            // Remove this item's callback when closed
-            delete openItemCallbacks.current[itemId];
-          }
+          navigation.navigate('Locations', { list: item });
         }}
       />
     );
@@ -360,15 +342,55 @@ export default function List({ navigation }) {
               placeholder="Enter list name"
               value={newListName}
               onChangeText={setNewListName}
-              autoFocus
               maxLength={50}
             />
+
+            <Text style={styles.iconSectionTitle}>Choose Icon</Text>
+            <FlatList
+              data={foodEmojis}
+              numColumns={6}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.emojiButton,
+                    newListIcon === item && styles.emojiButtonSelected
+                  ]}
+                  onPress={() => setNewListIcon(item)}
+                >
+                  <Text style={styles.emojiText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              style={styles.emojiGrid}
+              contentContainerStyle={styles.emojiGridContent}
+            />
+
+            <Text style={styles.iconSectionTitle}>Choose Color</Text>
+            <View style={styles.colorGrid}>
+              {pastelColors.map((colorItem) => (
+                <TouchableOpacity
+                  key={colorItem.color}
+                  style={[
+                    styles.colorButton,
+                    { backgroundColor: colorItem.color },
+                    newListColor === colorItem.color && styles.colorButtonSelected
+                  ]}
+                  onPress={() => setNewListColor(colorItem.color)}
+                >
+                  {newListColor === colorItem.color && (
+                    <Ionicons name="checkmark" size={20} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalCancelButton]}
                 onPress={() => {
                   setNewListName('');
+                  setNewListIcon('🍕');
+                  setNewListColor('#A2C0B0');
                   setModalVisible(false);
                 }}
               >
@@ -423,6 +445,25 @@ export default function List({ navigation }) {
               style={styles.emojiGrid}
               contentContainerStyle={styles.emojiGridContent}
             />
+
+            <Text style={styles.iconSectionTitle}>Choose Color</Text>
+            <View style={styles.colorGrid}>
+              {pastelColors.map((colorItem) => (
+                <TouchableOpacity
+                  key={colorItem.color}
+                  style={[
+                    styles.colorButton,
+                    { backgroundColor: colorItem.color },
+                    selectedColor === colorItem.color && styles.colorButtonSelected
+                  ]}
+                  onPress={() => setSelectedColor(colorItem.color)}
+                >
+                  {selectedColor === colorItem.color && (
+                    <Ionicons name="checkmark" size={20} color="#fff" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -560,7 +601,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f8f5',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -691,6 +731,25 @@ const styles = StyleSheet.create({
   },
   emojiText: {
     fontSize: 28,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+    gap: 12,
+  },
+  colorButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  colorButtonSelected: {
+    borderColor: '#333',
+    borderWidth: 3,
   },
   modalButtons: {
     flexDirection: 'row',
