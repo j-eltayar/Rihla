@@ -18,6 +18,9 @@
       "bundleIdentifier": "com.anonymous.Rihla",
       "icon": "./assets/ios-splash.png",
       "backgroundColor": "#fffff0",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you find nearby places and add them to your lists."
+      },
       "config": {
         "googleMapsApiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
       }
@@ -29,6 +32,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.Rihla",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
@@ -39,7 +46,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Rihla to use your location to find nearby places."
+        }
+      ]
     ],
     "extra": {
       "eas": {

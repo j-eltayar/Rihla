@@ -1,0 +1,247 @@
+import React from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+  Easing,
+} from 'react-native-reanimated';
+import LocationSearchInput from './LocationSearchInput';
+
+export default function EditLocationModal({
+  visible,
+  onClose,
+  onSaveEdit,
+  currentLocation,
+  accentColor = '#4CAF50',
+}) {
+  const translateY = useSharedValue(0);
+  const [selectedLocation, setSelectedLocation] = React.useState(null);
+
+  // Reset selected location when modal opens with current location
+  React.useEffect(() => {
+    if (visible && currentLocation) {
+      setSelectedLocation(currentLocation);
+      translateY.value = 1000;
+      translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    } else if (!visible) {
+      setSelectedLocation(null);
+    }
+  }, [visible, currentLocation]);
+
+  const closeSheet = () => {
+    translateY.value = withTiming(1000, { duration: 250 }, () => {
+      runOnJS(onClose)();
+    });
+  };
+
+  // Pan gesture for swipe to dismiss
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        translateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        translateY.value = withTiming(1000, { duration: 200 }, () => {
+          runOnJS(onClose)();
+        });
+      } else {
+        translateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  const handleSaveEdit = () => {
+    if (selectedLocation) {
+      onSaveEdit(selectedLocation);
+      closeSheet();
+    }
+  };
+
+  return (
+    <Modal
+      animationType="none"
+      transparent={true}
+      visible={visible}
+      onRequestClose={closeSheet}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <TouchableOpacity
+          style={styles.bottomSheetOverlay}
+          activeOpacity={1}
+          onPress={closeSheet}
+        >
+          <GestureDetector gesture={panGesture}>
+            <Animated.View 
+              style={[styles.bottomSheetContent, animatedStyle]}
+              onStartShouldSetResponder={() => true}
+            >
+              <View style={styles.bottomSheetHandle} />
+
+              <Text style={styles.modalTitle}>Edit Location</Text>
+
+              <Text style={styles.instructionText}>
+                Search for a new location using Google
+              </Text>
+
+              <LocationSearchInput
+                onLocationSelected={(location) => {
+                  setSelectedLocation(location);
+                }}
+                placeholder="Search for a location..."
+                initialValue={currentLocation?.name || ""}
+              />
+
+              {selectedLocation && (
+                <View style={styles.selectedLocationContainer}>
+                  <Text style={styles.selectedLocationTitle}>Selected:</Text>
+                  <Text style={styles.selectedLocationName}>{selectedLocation.name}</Text>
+                  <Text style={styles.selectedLocationAddress}>{selectedLocation.address}</Text>
+                </View>
+              )}
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalCancelButton]}
+                  onPress={closeSheet}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton, 
+                    styles.createButton, 
+                    { backgroundColor: accentColor },
+                    !selectedLocation && styles.disabledButton
+                  ]}
+                  onPress={handleSaveEdit}
+                  disabled={!selectedLocation}
+                >
+                  <Text style={[
+                    styles.createButtonText,
+                    !selectedLocation && styles.disabledButtonText
+                  ]}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </GestureDetector>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+    minHeight: 400,
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ccc',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  instructionText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  selectedLocationContainer: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  selectedLocationTitle: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
+    fontWeight: '600',
+  },
+  selectedLocationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  selectedLocationAddress: {
+    fontSize: 14,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 'auto',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  createButton: {
+    backgroundColor: '#4CAF50',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  disabledButtonText: {
+    color: '#ccc',
+  },
+});
