@@ -165,6 +165,10 @@ export default function List({ navigation }) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [openItemId, setOpenItemId] = React.useState(null);
 
+  // Bottom sheet swipe gesture states
+  const createSheetTranslateY = useSharedValue(0);
+  const editSheetTranslateY = useSharedValue(0);
+
   const closeAllItems = React.useCallback(() => {
     setOpenItemId(null);
   }, []);
@@ -181,6 +185,24 @@ export default function List({ navigation }) {
     list.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Helper functions to close sheets with animation
+  const closeCreateSheet = () => {
+    createSheetTranslateY.value = withTiming(1000, { duration: 250 }, () => {
+      runOnJS(setModalVisible)(false);
+      runOnJS(setNewListName)('');
+      runOnJS(setNewListIcon)('🍕');
+      runOnJS(setNewListColor)('#A2C0B0');
+    });
+  };
+
+  const closeEditSheet = () => {
+    editSheetTranslateY.value = withTiming(1000, { duration: 250 }, () => {
+      runOnJS(setEditModalVisible)(false);
+      runOnJS(setEditingList)(null);
+      runOnJS(setEditListName)('');
+    });
+  };
+
   const handleAddList = () => {
     if (newListName.trim() === '') {
       Alert.alert('Error', 'Please enter a list name');
@@ -188,10 +210,7 @@ export default function List({ navigation }) {
     }
 
     addList(newListName, newListIcon, newListColor);
-    setNewListName('');
-    setNewListIcon('🍕');
-    setNewListColor('#A2C0B0');
-    setModalVisible(false);
+    closeCreateSheet();
   };
 
   const handleEditList = (list) => {
@@ -213,9 +232,7 @@ export default function List({ navigation }) {
       icon: selectedIcon,
       color: selectedColor,
     });
-    setEditModalVisible(false);
-    setEditingList(null);
-    setEditListName('');
+    closeEditSheet();
   };
 
   const handleDeleteList = (listId) => {
@@ -239,6 +256,82 @@ export default function List({ navigation }) {
       ],
     );
   };
+
+  // Create sheet pan gesture
+  const createSheetGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        createSheetTranslateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        createSheetTranslateY.value = withTiming(1000, { duration: 200 }, () => {
+          runOnJS(setModalVisible)(false);
+          runOnJS(setNewListName)('');
+          runOnJS(setNewListIcon)('🍕');
+          runOnJS(setNewListColor)('#A2C0B0');
+        });
+      } else {
+        createSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  // Edit sheet pan gesture
+  const editSheetGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        editSheetTranslateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        editSheetTranslateY.value = withTiming(1000, { duration: 200 }, () => {
+          runOnJS(setEditModalVisible)(false);
+          runOnJS(setEditingList)(null);
+          runOnJS(setEditListName)('');
+        });
+      } else {
+        editSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  // Animated styles
+  const createSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: createSheetTranslateY.value }],
+  }));
+
+  const editSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: editSheetTranslateY.value }],
+  }));
+
+  // Reset sheet position when opening
+  React.useEffect(() => {
+    if (modalVisible) {
+      createSheetTranslateY.value = 0;
+    }
+  }, [modalVisible]);
+
+  React.useEffect(() => {
+    if (editModalVisible) {
+      editSheetTranslateY.value = 0;
+    }
+  }, [editModalVisible]);
+
+  // Animate sheet opening
+  React.useEffect(() => {
+    if (modalVisible) {
+      createSheetTranslateY.value = 1000; // Start off-screen
+      createSheetTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [modalVisible]);
+
+  React.useEffect(() => {
+    if (editModalVisible) {
+      editSheetTranslateY.value = 1000; // Start off-screen
+      editSheetTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [editModalVisible]);
 
   const renderListItem = ({ item }) => {
     return (
@@ -327,96 +420,108 @@ export default function List({ navigation }) {
         />
       )}
 
+      {/* Create New List Bottom Sheet */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeCreateSheet}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New List</Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Enter list name"
-              value={newListName}
-              onChangeText={setNewListName}
-              maxLength={50}
-            />
+        <TouchableOpacity 
+          style={styles.bottomSheetOverlay} 
+          activeOpacity={1}
+          onPress={closeCreateSheet}
+        >
+          <GestureDetector gesture={createSheetGesture}>
+            <Animated.View style={[styles.bottomSheetContent, createSheetAnimatedStyle]}>
+              <View style={styles.bottomSheetHandle} />
+              
+              <Text style={styles.modalTitle}>Create New List</Text>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Enter list name"
+                value={newListName}
+                onChangeText={setNewListName}
+                maxLength={50}
+              />
 
-            <Text style={styles.iconSectionTitle}>Choose Icon</Text>
-            <FlatList
-              data={foodEmojis}
-              numColumns={6}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
+              <Text style={styles.iconSectionTitle}>Choose Icon</Text>
+              <FlatList
+                data={foodEmojis}
+                numColumns={6}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.emojiButton,
+                      newListIcon === item && styles.emojiButtonSelected
+                    ]}
+                    onPress={() => setNewListIcon(item)}
+                  >
+                    <Text style={styles.emojiText}>{item}</Text>
+                  </TouchableOpacity>
+                )}
+                style={styles.emojiGrid}
+                contentContainerStyle={styles.emojiGridContent}
+              />
+
+              <Text style={styles.iconSectionTitle}>Choose Color</Text>
+              <View style={styles.colorGrid}>
+                {pastelColors.map((colorItem) => (
+                  <TouchableOpacity
+                    key={colorItem.color}
+                    style={[
+                      styles.colorButton,
+                      { backgroundColor: colorItem.color },
+                      newListColor === colorItem.color && styles.colorButtonSelected
+                    ]}
+                    onPress={() => setNewListColor(colorItem.color)}
+                  >
+                    {newListColor === colorItem.color && (
+                      <Ionicons name="checkmark" size={20} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[
-                    styles.emojiButton,
-                    newListIcon === item && styles.emojiButtonSelected
-                  ]}
-                  onPress={() => setNewListIcon(item)}
+                  style={[styles.modalButton, styles.modalCancelButton]}
+                  onPress={closeCreateSheet}
                 >
-                  <Text style={styles.emojiText}>{item}</Text>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-              )}
-              style={styles.emojiGrid}
-              contentContainerStyle={styles.emojiGridContent}
-            />
 
-            <Text style={styles.iconSectionTitle}>Choose Color</Text>
-            <View style={styles.colorGrid}>
-              {pastelColors.map((colorItem) => (
                 <TouchableOpacity
-                  key={colorItem.color}
-                  style={[
-                    styles.colorButton,
-                    { backgroundColor: colorItem.color },
-                    newListColor === colorItem.color && styles.colorButtonSelected
-                  ]}
-                  onPress={() => setNewListColor(colorItem.color)}
+                  style={[styles.modalButton, styles.createButton]}
+                  onPress={handleAddList}
                 >
-                  {newListColor === colorItem.color && (
-                    <Ionicons name="checkmark" size={20} color="#fff" />
-                  )}
+                  <Text style={styles.createButtonText}>Create</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalCancelButton]}
-                onPress={() => {
-                  setNewListName('');
-                  setNewListIcon('🍕');
-                  setNewListColor('#A2C0B0');
-                  setModalVisible(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton]}
-                onPress={handleAddList}
-              >
-                <Text style={styles.createButtonText}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+              </View>
+            </Animated.View>
+          </GestureDetector>
+        </TouchableOpacity>
       </Modal>
 
+      {/* Edit List Bottom Sheet */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={editModalVisible}
-        onRequestClose={() => setEditModalVisible(false)}
+        onRequestClose={closeEditSheet}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit List</Text>
+        <TouchableOpacity 
+          style={styles.bottomSheetOverlay} 
+          activeOpacity={1}
+          onPress={closeEditSheet}
+        >
+          <GestureDetector gesture={editSheetGesture}>
+            <Animated.View style={[styles.bottomSheetContent, editSheetAnimatedStyle]}>
+              <View style={styles.bottomSheetHandle} />
+              
+              <Text style={styles.modalTitle}>Edit List</Text>
             
             <TextInput
               style={styles.input}
@@ -468,11 +573,7 @@ export default function List({ navigation }) {
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalCancelButton]}
-                onPress={() => {
-                  setEditModalVisible(false);
-                  setEditingList(null);
-                  setEditListName('');
-                }}
+                onPress={closeEditSheet}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -484,8 +585,9 @@ export default function List({ navigation }) {
                 <Text style={styles.createButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+            </Animated.View>
+          </GestureDetector>
+        </TouchableOpacity>
       </Modal>
 
       <StatusBar style="auto" />
@@ -675,11 +777,26 @@ const styles = StyleSheet.create({
     color: '#bbb',
     textAlign: 'center',
   },
-  modalOverlay: {
+  bottomSheetOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+    maxHeight: '90%',
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ddd',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   modalContent: {
     backgroundColor: '#fff',

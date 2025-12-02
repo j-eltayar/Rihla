@@ -164,6 +164,10 @@ export default function Locations({ route, navigation }) {
   const [editLocationAddress, setEditLocationAddress] = React.useState('');
   const [openItemId, setOpenItemId] = React.useState(null);
   
+  // Bottom sheet swipe gesture states
+  const addSheetTranslateY = useSharedValue(0);
+  const editSheetTranslateY = useSharedValue(0);
+  
   // Get locations for this specific list
   const locations = getLocationsByListId(list.id);
 
@@ -183,9 +187,25 @@ export default function Locations({ route, navigation }) {
     }
 
     addLocation(list.id, newLocationName, newLocationAddress);
-    setNewLocationName('');
-    setNewLocationAddress('');
-    setModalVisible(false);
+    closeAddSheet();
+  };
+  
+  // Close functions with slide animation
+  const closeAddSheet = () => {
+    addSheetTranslateY.value = withTiming(1000, { duration: 250 }, () => {
+      runOnJS(setModalVisible)(false);
+      runOnJS(setNewLocationName)('');
+      runOnJS(setNewLocationAddress)('');
+    });
+  };
+  
+  const closeEditSheet = () => {
+    editSheetTranslateY.value = withTiming(1000, { duration: 250 }, () => {
+      runOnJS(setEditModalVisible)(false);
+      runOnJS(setEditingLocation)(null);
+      runOnJS(setEditLocationName)('');
+      runOnJS(setEditLocationAddress)('');
+    });
   };
 
   const handleEditLocation = (location) => {
@@ -205,10 +225,7 @@ export default function Locations({ route, navigation }) {
       name: editLocationName.trim(),
       address: editLocationAddress.trim(),
     });
-    setEditModalVisible(false);
-    setEditingLocation(null);
-    setEditLocationName('');
-    setEditLocationAddress('');
+    closeEditSheet();
   };
 
   const handleDeleteLocation = (locationId) => {
@@ -227,6 +244,69 @@ export default function Locations({ route, navigation }) {
       ]
     );
   };
+
+  // Add location sheet pan gesture
+  const addSheetGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        addSheetTranslateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        addSheetTranslateY.value = withTiming(1000, { duration: 200 }, () => {
+          runOnJS(setModalVisible)(false);
+          runOnJS(setNewLocationName)('');
+          runOnJS(setNewLocationAddress)('');
+        });
+      } else {
+        addSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  // Edit location sheet pan gesture
+  const editLocationSheetGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        editSheetTranslateY.value = event.translationY;
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationY > 100 || event.velocityY > 500) {
+        editSheetTranslateY.value = withTiming(1000, { duration: 200 }, () => {
+          runOnJS(setEditModalVisible)(false);
+          runOnJS(setEditingLocation)(null);
+          runOnJS(setEditLocationName)('');
+          runOnJS(setEditLocationAddress)('');
+        });
+      } else {
+        editSheetTranslateY.value = withTiming(0, { duration: 200 });
+      }
+    });
+
+  // Animated styles
+  const addSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: addSheetTranslateY.value }],
+  }));
+
+  const editSheetAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: editSheetTranslateY.value }],
+  }));
+
+  // Animate sheet opening
+  React.useEffect(() => {
+    if (modalVisible) {
+      addSheetTranslateY.value = 1000; // Start off-screen
+      addSheetTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [modalVisible]);
+
+  React.useEffect(() => {
+    if (editModalVisible) {
+      editSheetTranslateY.value = 1000; // Start off-screen
+      editSheetTranslateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
+    }
+  }, [editModalVisible]);
 
   // Edge swipe gesture for going back
   const edgeSwipeX = useSharedValue(0);
@@ -339,105 +419,112 @@ export default function Locations({ route, navigation }) {
           }
         />
 
-        {/* Add Location Modal */}
+        {/* Add Location Bottom Sheet */}
         <Modal
-          animationType="slide"
+          animationType="none"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
+          onRequestClose={closeAddSheet}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Add Location</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Location name"
-                value={newLocationName}
-                onChangeText={setNewLocationName}
-                maxLength={100}
-              />
+          <TouchableOpacity 
+            style={styles.bottomSheetOverlay} 
+            activeOpacity={1}
+            onPress={closeAddSheet}
+          >
+            <GestureDetector gesture={addSheetGesture}>
+              <Animated.View style={[styles.bottomSheetContent, addSheetAnimatedStyle]}>
+                <View style={styles.bottomSheetHandle} />
+                
+                <Text style={styles.modalTitle}>Add Location</Text>
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="Location name"
+                  value={newLocationName}
+                  onChangeText={setNewLocationName}
+                  maxLength={100}
+                />
 
-              <TextInput
-                style={styles.input}
-                placeholder="Address"
-                value={newLocationAddress}
-                onChangeText={setNewLocationAddress}
-                maxLength={200}
-              />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Address"
+                  value={newLocationAddress}
+                  onChangeText={setNewLocationAddress}
+                  maxLength={200}
+                />
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={() => {
-                    setNewLocationName('');
-                    setNewLocationAddress('');
-                    setModalVisible(false);
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelButton]}
+                    onPress={closeAddSheet}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.createButton, { backgroundColor: list.color }]}
-                  onPress={handleAddLocation}
-                >
-                  <Text style={styles.createButtonText}>Add</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.createButton, { backgroundColor: list.color }]}
+                    onPress={handleAddLocation}
+                  >
+                    <Text style={styles.createButtonText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </GestureDetector>
+          </TouchableOpacity>
         </Modal>
 
-        {/* Edit Location Modal */}
+        {/* Edit Location Bottom Sheet */}
         <Modal
-          animationType="slide"
+          animationType="none"
           transparent={true}
           visible={editModalVisible}
-          onRequestClose={() => setEditModalVisible(false)}
+          onRequestClose={closeEditSheet}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Edit Location</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Location name"
-                value={editLocationName}
-                onChangeText={setEditLocationName}
-                maxLength={100}
-              />
+          <TouchableOpacity 
+            style={styles.bottomSheetOverlay} 
+            activeOpacity={1}
+            onPress={closeEditSheet}
+          >
+            <GestureDetector gesture={editLocationSheetGesture}>
+              <Animated.View style={[styles.bottomSheetContent, editSheetAnimatedStyle]}>
+                <View style={styles.bottomSheetHandle} />
+                
+                <Text style={styles.modalTitle}>Edit Location</Text>
+                
+                <TextInput
+                  style={styles.input}
+                  placeholder="Location name"
+                  value={editLocationName}
+                  onChangeText={setEditLocationName}
+                  maxLength={100}
+                />
 
-              <TextInput
-                style={styles.input}
-                placeholder="Address"
-                value={editLocationAddress}
-                onChangeText={setEditLocationAddress}
-                maxLength={200}
-              />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Address"
+                  value={editLocationAddress}
+                  onChangeText={setEditLocationAddress}
+                  maxLength={200}
+                />
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={() => {
-                    setEditModalVisible(false);
-                    setEditingLocation(null);
-                    setEditLocationName('');
-                    setEditLocationAddress('');
-                  }}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelButton]}
+                    onPress={closeEditSheet}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.createButton, { backgroundColor: list.color }]}
-                  onPress={handleSaveEdit}
-                >
-                  <Text style={styles.createButtonText}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.createButton, { backgroundColor: list.color }]}
+                    onPress={handleSaveEdit}
+                  >
+                    <Text style={styles.createButtonText}>Save</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+            </GestureDetector>
+          </TouchableOpacity>
         </Modal>
 
         <StatusBar style="auto" />
@@ -611,6 +698,27 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 4,
     fontWeight: '500',
+  },
+  bottomSheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheetContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 40,
+    maxHeight: '90%',
+  },
+  bottomSheetHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#ddd',
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   modalOverlay: {
     flex: 1,
