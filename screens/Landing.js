@@ -27,14 +27,40 @@ export default function Landing({ route }) {
       return [];
     }
     
-    return allLocations.filter(location => {
+    const filtered = allLocations.filter(location => {
+      // Validate coordinates first - prevent any location with invalid coordinates
+      const hasValidCoordinates = 
+        location.lat != null && 
+        location.lng != null && 
+        typeof location.lat === 'number' &&
+        typeof location.lng === 'number' &&
+        !isNaN(location.lat) && 
+        !isNaN(location.lng);
+      
       const matchesSearch = searchQuery === '' || 
         location.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesList = selectedLists.length === 0 || 
         selectedLists.includes(location.listId);
-      return matchesSearch && matchesList;
+      
+      return hasValidCoordinates && matchesSearch && matchesList;
     });
+    
+    return filtered;
+    return filtered;
   }, [allLocations, searchQuery, selectedLists]);
+
+  // Force marker re-render without resetting map position
+  const [markerKey, setMarkerKey] = React.useState(0);
+  const prevLocationIds = React.useRef('');
+  
+  React.useEffect(() => {
+    // Only update if the actual location IDs changed (not just order)
+    const currentIds = filteredLocations.map(l => l.id).sort().join(',');
+    if (currentIds !== prevLocationIds.current) {
+      prevLocationIds.current = currentIds;
+      setMarkerKey(prev => prev + 1);
+    }
+  }, [filteredLocations]);
 
   return (
     <View style={styles.container}>
@@ -50,19 +76,20 @@ export default function Landing({ route }) {
           longitudeDelta: 0.0421,
         }}
       >
-        {filteredLocations
-          .filter(location => {
-            // Only render markers with valid coordinates
-            return location.lat != null && 
-                   location.lng != null && 
-                   !isNaN(location.lat) && 
-                   !isNaN(location.lng);
-          })
-          .map(location => {
+        {filteredLocations.map((location, index) => {
+          try {
+            // Extra safety check - skip if coordinates are invalid
+            if (!location || !location.id || !location.lat || !location.lng || 
+                isNaN(location.lat) || isNaN(location.lng) ||
+                typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+              console.warn('Skipping invalid marker:', location?.name);
+              return null;
+            }
+            
             const list = lists.find(l => l.id === location.listId);
             return (
               <Marker
-                key={location.id}
+                key={`${location.id}-${markerKey}`}
                 coordinate={{ latitude: location.lat, longitude: location.lng }}
                 title={location.name}
                 description={list?.name || ''}
@@ -72,7 +99,11 @@ export default function Landing({ route }) {
                 </View>
               </Marker>
             );
-          })}
+          } catch (error) {
+            console.error('Error rendering marker:', location?.name, error);
+            return null;
+          }
+        })}
       </MapView>
       
       {/* Search Bar Overlay */}
