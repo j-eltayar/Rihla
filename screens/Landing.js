@@ -50,21 +50,29 @@ export default function Landing({ route }) {
           longitudeDelta: 0.0421,
         }}
       >
-        {filteredLocations.map(location => {
-          const list = lists.find(l => l.id === location.listId);
-          return (
-            <Marker
-              key={location.id}
-              coordinate={{ latitude: location.lat, longitude: location.lng }}
-              title={location.name}
-              description={list?.name || ''}
-            >
-              <View style={styles.customMarker}>
-                <Ionicons name="location" size={32} color={list?.color || '#A2C0B0'} />
-              </View>
-            </Marker>
-          );
-        })}
+        {filteredLocations
+          .filter(location => {
+            // Only render markers with valid coordinates
+            return location.lat != null && 
+                   location.lng != null && 
+                   !isNaN(location.lat) && 
+                   !isNaN(location.lng);
+          })
+          .map(location => {
+            const list = lists.find(l => l.id === location.listId);
+            return (
+              <Marker
+                key={location.id}
+                coordinate={{ latitude: location.lat, longitude: location.lng }}
+                title={location.name}
+                description={list?.name || ''}
+              >
+                <View style={styles.customMarker}>
+                  <Ionicons name="location" size={32} color={list?.color || '#A2C0B0'} />
+                </View>
+              </Marker>
+            );
+          })}
       </MapView>
       
       {/* Search Bar Overlay */}

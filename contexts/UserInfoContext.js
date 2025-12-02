@@ -91,8 +91,8 @@ export const AppDataProvider = ({ children, initialUserInfo }) => {
       name: name.trim(),
       address: address.trim(),
       rating: rating,
-      lat: lat || 0,
-      lng: lng || 0,
+      lat: lat || 45.5017, // Default to Montreal
+      lng: lng || -73.5673,
     };
     setLocations(prev => [...prev, newLocation]);
     
