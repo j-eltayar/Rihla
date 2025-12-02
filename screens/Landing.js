@@ -21,11 +21,20 @@ export default function Landing({ route }) {
     );
   };
   
-  const filteredLocations = allLocations.filter(location => {
-    const matchesSearch = location.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesList = selectedLists.length === 0 || selectedLists.includes(location.listId);
-    return matchesSearch && matchesList;
-  });
+  // Memoize filtered locations to prevent unnecessary recalculations
+  const filteredLocations = React.useMemo(() => {
+    if (!allLocations || !Array.isArray(allLocations)) {
+      return [];
+    }
+    
+    return allLocations.filter(location => {
+      const matchesSearch = searchQuery === '' || 
+        location.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesList = selectedLists.length === 0 || 
+        selectedLists.includes(location.listId);
+      return matchesSearch && matchesList;
+    });
+  }, [allLocations, searchQuery, selectedLists]);
 
   return (
     <View style={styles.container}>
@@ -95,7 +104,7 @@ export default function Landing({ route }) {
         </TouchableOpacity>
         
         {/* Dropdown Filter Options */}
-        {showFilters && (
+        {showFilters && lists && lists.length > 0 && (
           <View style={styles.filterDropdown}>
             {lists.map(list => (
               <TouchableOpacity
