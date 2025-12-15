@@ -1,10 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-// TODO: Re-enable after native rebuild
-// import * as Location from 'expo-location';
+import * as Location from 'expo-location';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyByfsB6q_cs-DBKQnbHIemZkuY0rGBTi4c';
 
 export default function LocationSearchInput({ 
   onLocationSelected, 
@@ -12,25 +11,32 @@ export default function LocationSearchInput({
   initialValue = "",
 }) {
   const [selectedPlace, setSelectedPlace] = React.useState(initialValue);
-  // const [currentLocation, setCurrentLocation] = React.useState(null);
+  const [currentLocation, setCurrentLocation] = React.useState(null);
+  const [locationError, setLocationError] = React.useState(false);
 
-  // TODO: Re-enable after native rebuild
   // Request location permissions and get current location
-  // React.useEffect(() => {
-  //   (async () => {
-  //     let { status } = await Location.requestForegroundPermissionsAsync();
-  //     if (status !== 'granted') {
-  //       console.log('Permission to access location was denied');
-  //       return;
-  //     }
+  React.useEffect(() => {
+    (async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied');
+          setLocationError(true);
+          return;
+        }
 
-  //     let location = await Location.getCurrentPositionAsync({});
-  //     setCurrentLocation({
-  //       latitude: location.coords.latitude,
-  //       longitude: location.coords.longitude,
-  //     });
-  //   })();
-  // }, []);
+        let location = await Location.getCurrentPositionAsync({});
+        setCurrentLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+        console.log('✅ Location loaded:', location.coords.latitude, location.coords.longitude);
+      } catch (error) {
+        console.log('⚠️ Location not available in this build. Rebuild with Xcode for location features.');
+        setLocationError(true);
+      }
+    })();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -61,9 +67,8 @@ export default function LocationSearchInput({
           language: 'en',
           components: 'country:ca', // Focus on Canada, change as needed
           types: 'establishment', // Show all types of places
-          // TODO: Re-enable after native rebuild
-          // location: currentLocation ? `${currentLocation.latitude},${currentLocation.longitude}` : undefined,
-          // radius: currentLocation ? 50000 : undefined, // 50km radius
+          location: currentLocation ? `${currentLocation.latitude},${currentLocation.longitude}` : undefined,
+          radius: currentLocation ? 50000 : undefined, // 50km radius
         }}
         listViewDisplayed="auto"
         keepResultsAfterBlur={true}
@@ -85,10 +90,9 @@ export default function LocationSearchInput({
           placeholderTextColor: '#999',
           returnKeyType: 'search',
         }}
-        // TODO: Re-enable after native rebuild
-        // currentLocation={true}
-        // currentLocationLabel="Current location"
-        // enableHighAccuracyLocation={true}
+        currentLocation={!locationError}
+        currentLocationLabel="Current location"
+        enableHighAccuracyLocation={!locationError}
         GooglePlacesSearchQuery={{
           rankby: 'distance',
         }}
@@ -101,7 +105,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: 15,
-    minHeight: 250, // Ensure space for suggestions
+    minHeight: 200, // Space for suggestions
     zIndex: 1,
   },
   autocompleteContainer: {

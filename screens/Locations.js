@@ -133,7 +133,6 @@ const SwipeableLocationItem = ({ item, onEdit, onDelete, onPress, openItemId, se
             </View>
             <View style={styles.locationInfo}>
               <Text style={styles.locationName}>{item.name}</Text>
-              <Text style={styles.locationAddress}>{item.address}</Text>
               <View style={styles.ratingContainer}>
                 <Ionicons name="star" size={16} color="#FFD700" />
                 <Text style={styles.ratingText}>{item.rating}</Text>

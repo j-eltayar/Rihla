@@ -22,7 +22,7 @@
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to help you find nearby places and add them to your lists."
       },
       "config": {
-        "googleMapsApiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
+        "googleMapsApiKey": "AIzaSyA6b9e_fCVCnXC7Vg083n8axXktjaUt9mE"
       }
     },
     "android": {
@@ -38,7 +38,7 @@
       ],
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyDv3uen4tlhqrOs8CNXZthm-HWsyiaS1xo"
+          "apiKey": "AIzaSyA6b9e_fCVCnXC7Vg083n8axXktjaUt9mE"
         }
       }
     },

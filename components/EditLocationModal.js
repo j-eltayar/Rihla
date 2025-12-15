@@ -5,8 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -80,10 +78,7 @@ export default function EditLocationModal({
       visible={visible}
       onRequestClose={closeSheet}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
+      <View style={styles.modalContainer}>
         <TouchableOpacity
           style={styles.bottomSheetOverlay}
           activeOpacity={1}
@@ -96,62 +91,64 @@ export default function EditLocationModal({
             >
               <View style={styles.bottomSheetHandle} />
 
-              <Text style={styles.modalTitle}>Edit Location</Text>
+              <View style={styles.contentContainer}>
+                <Text style={styles.modalTitle}>Edit Location</Text>
 
-              <Text style={styles.instructionText}>
-                Search for a new location using Google
-              </Text>
+                <Text style={styles.instructionText}>
+                  Search for a new location using Google
+                </Text>
 
-              <LocationSearchInput
-                onLocationSelected={(location) => {
-                  setSelectedLocation(location);
-                }}
-                placeholder="Search for a location..."
-                initialValue={currentLocation?.name || ""}
-              />
+                <LocationSearchInput
+                  onLocationSelected={(location) => {
+                    setSelectedLocation(location);
+                  }}
+                  placeholder="Search for a location..."
+                  initialValue={currentLocation?.name || ""}
+                />
 
-              {selectedLocation && (
-                <View style={styles.selectedLocationContainer}>
-                  <Text style={styles.selectedLocationTitle}>Selected:</Text>
-                  <Text style={styles.selectedLocationName}>{selectedLocation.name}</Text>
-                  <Text style={styles.selectedLocationAddress}>{selectedLocation.address}</Text>
+                {selectedLocation && (
+                  <View style={styles.selectedLocationContainer}>
+                    <Text style={styles.selectedLocationTitle}>Selected:</Text>
+                    <Text style={styles.selectedLocationName}>{selectedLocation.name}</Text>
+                    <Text style={styles.selectedLocationAddress}>{selectedLocation.address}</Text>
+                  </View>
+                )}
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelButton]}
+                    onPress={closeSheet}
+                  >
+                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton, 
+                      styles.createButton, 
+                      { backgroundColor: accentColor },
+                      !selectedLocation && styles.disabledButton
+                    ]}
+                    onPress={handleSaveEdit}
+                    disabled={!selectedLocation}
+                  >
+                    <Text style={[
+                      styles.createButtonText,
+                      !selectedLocation && styles.disabledButtonText
+                    ]}>Save</Text>
+                  </TouchableOpacity>
                 </View>
-              )}
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalButton, styles.modalCancelButton]}
-                  onPress={closeSheet}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.modalButton, 
-                    styles.createButton, 
-                    { backgroundColor: accentColor },
-                    !selectedLocation && styles.disabledButton
-                  ]}
-                  onPress={handleSaveEdit}
-                  disabled={!selectedLocation}
-                >
-                  <Text style={[
-                    styles.createButtonText,
-                    !selectedLocation && styles.disabledButtonText
-                  ]}>Save</Text>
-                </TouchableOpacity>
               </View>
             </Animated.View>
           </GestureDetector>
         </TouchableOpacity>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoidingView: {
+  modalContainer: {
     flex: 1,
   },
   bottomSheetOverlay: {
@@ -163,9 +160,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '90%',
-    minHeight: 400,
+    paddingTop: 10,
+    maxHeight: '80%',
+    height: '80%',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   bottomSheetHandle: {
     width: 40,
