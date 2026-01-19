@@ -10,10 +10,12 @@ import EditLocationModal from '../components/EditLocationModal';
 
 const SWIPE_WIDTH = 150;
 
-const SwipeableLocationItem = ({ item, onEdit, onDelete, onPress, openItemId, setOpenItemId, listColor }) => {
+const SwipeableLocationItem = ({ item, onEdit, onDelete, onPress, openItemId, setOpenItemId, listColor, onDragStart, onDragEnd, isDragging }) => {
   const translateX = useSharedValue(0);
   const isOpenShared = useSharedValue(0);
   const didSwipe = useSharedValue(false);
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
 
   // Close this item when openItemId changes to something else or null
   React.useEffect(() => {
@@ -74,16 +76,26 @@ const SwipeableLocationItem = ({ item, onEdit, onDelete, onPress, openItemId, se
       }
     });
 
+  // Long press gesture for drag-and-drop
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(500)
+    .onStart(() => {
+      runOnJS(onDragStart)(item);
+      scale.value = withTiming(1.05, { duration: 200 });
+      opacity.value = withTiming(0.8, { duration: 200 });
+    });
+
   // Create a tap gesture to block page swipes completely when touching location item
   const blockingGesture = Gesture.Tap()
     .maxDuration(100000)
     .shouldCancelWhenOutside(false);
 
   // Combine gestures - the pan takes priority, but both block external gestures
-  const combinedGesture = Gesture.Exclusive(panGesture, blockingGesture);
+  const combinedGesture = Gesture.Exclusive(longPressGesture, panGesture, blockingGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: translateX.value }, { scale: scale.value }],
+    opacity: opacity.value,
   }));
 
   return (
@@ -129,14 +141,14 @@ const SwipeableLocationItem = ({ item, onEdit, onDelete, onPress, openItemId, se
             activeOpacity={0.8}
           >
             <View style={[styles.locationIconContainer, { backgroundColor: listColor }]}>
-              <Ionicons name="location" size={24} color="#fff" />
+              {item.rating != null ? (
+                <Text style={styles.ratingIconText}>{item.rating}</Text>
+              ) : (
+                <Ionicons name="location" size={24} color="#fff" />
+              )}
             </View>
             <View style={styles.locationInfo}>
               <Text style={styles.locationName}>{item.name}</Text>
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="#FFD700" />
-                <Text style={styles.ratingText}>{item.rating}</Text>
-              </View>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#ccc" />
           </TouchableOpacity>
@@ -153,6 +165,8 @@ export default function Locations({ route, navigation }) {
     addLocation,
     updateLocation,
     deleteLocation,
+    reorderLocations,
+    locations: allLocations,
   } = useAppData();
 
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -160,22 +174,36 @@ export default function Locations({ route, navigation }) {
   const [editModalVisible, setEditModalVisible] = React.useState(false);
   const [editingLocation, setEditingLocation] = React.useState(null);
   const [openItemId, setOpenItemId] = React.useState(null);
+  const [draggingItem, setDraggingItem] = React.useState(null);
+  const [localLocations, setLocalLocations] = React.useState([]);
   
   // Get locations for this specific list
-  const locations = getLocationsByListId(list.id);
-
-  const filteredLocations = locations.filter(location =>
-    location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    location.address.toLowerCase().includes(searchQuery.toLowerCase())
+  const locations = React.useMemo(() => 
+    getLocationsByListId(list.id), 
+    [allLocations, list.id, getLocationsByListId]
   );
+
+  // Initialize local locations when locations change
+  React.useEffect(() => {
+    if (!draggingItem) {
+      setLocalLocations(locations);
+    }
+  }, [locations.length, draggingItem]);
+
+  const filteredLocations = searchQuery 
+    ? localLocations.filter(location =>
+        location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        location.address.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : localLocations;
 
   const closeAllItems = React.useCallback(() => {
     setOpenItemId(null);
   }, []);
 
   const handleAddLocation = (location) => {
-    // location object contains: { name, address, lat, lng, placeId }
-    addLocation(list.id, location.name, location.address, location.lat, location.lng);
+    // location object contains: { name, address, lat, lng, placeId, rating }
+    addLocation(list.id, location.name, location.address, location.lat, location.lng, location.rating);
     setModalVisible(false);
   };
   
@@ -191,6 +219,8 @@ export default function Locations({ route, navigation }) {
       address: location.address,
       lat: location.lat,
       lng: location.lng,
+      placeId: location.placeId,
+      rating: location.rating,
     });
     setEditModalVisible(false);
     setEditingLocation(null);
@@ -211,6 +241,22 @@ export default function Locations({ route, navigation }) {
         }
       ]
     );
+  };
+
+  const handleDragStart = (item) => {
+    setDraggingItem(item);
+    Alert.alert(
+      'Reorder Location',
+      `Long press and drag "${item.name}" to reorder`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleDragEnd = () => {
+    if (draggingItem) {
+      reorderLocations(list.id, localLocations);
+      setDraggingItem(null);
+    }
   };
 
   // Edge swipe gesture for going back
@@ -248,6 +294,9 @@ export default function Locations({ route, navigation }) {
       listColor={list.color}
       openItemId={openItemId}
       setOpenItemId={setOpenItemId}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      isDragging={draggingItem?.id === item.id}
       onEdit={(item) => {
         handleEditLocation(item);
       }}
@@ -496,6 +545,11 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
+  ratingIconText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
   locationAddress: {
     fontSize: 14,
     color: '#666',
@@ -504,11 +558,26 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
   },
   ratingText: {
     fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+    color: '#fff',
+    fontWeight: '700',
+  },
+  ratingDivider: {
+    fontSize: 12,
+    color: '#fff',
+    opacity: 0.8,
+    fontWeight: '500',
+  },
+  ratingMaxText: {
+    fontSize: 12,
+    color: '#fff',
+    opacity: 0.9,
     fontWeight: '500',
   },
   emptyContainer: {

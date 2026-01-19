@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  TextInput,
 } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
@@ -25,15 +26,18 @@ export default function EditLocationModal({
 }) {
   const translateY = useSharedValue(0);
   const [selectedLocation, setSelectedLocation] = React.useState(null);
+  const [rating, setRating] = React.useState('');
 
   // Reset selected location when modal opens with current location
   React.useEffect(() => {
     if (visible && currentLocation) {
       setSelectedLocation(currentLocation);
+      setRating(currentLocation.rating != null ? currentLocation.rating.toString() : '');
       translateY.value = 1000;
       translateY.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) });
     } else if (!visible) {
       setSelectedLocation(null);
+      setRating('');
     }
   }, [visible, currentLocation]);
 
@@ -66,7 +70,11 @@ export default function EditLocationModal({
 
   const handleSaveEdit = () => {
     if (selectedLocation) {
-      onSaveEdit(selectedLocation);
+      const numericRating = rating === '' ? null : parseFloat(rating);
+      onSaveEdit({
+        ...selectedLocation,
+        rating: numericRating,
+      });
       closeSheet();
     }
   };
@@ -113,6 +121,30 @@ export default function EditLocationModal({
                     <Text style={styles.selectedLocationAddress}>{selectedLocation.address}</Text>
                   </View>
                 )}
+
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.ratingLabel}>Rating (optional)</Text>
+                  <View style={styles.ratingInputContainer}>
+                    <TextInput
+                      style={styles.ratingInput}
+                      value={rating}
+                      onChangeText={(text) => {
+                        // Allow numbers and decimal point
+                        if (text === '' || /^\d*\.?\d*$/.test(text)) {
+                          const num = parseFloat(text);
+                          // Limit to 0-10 range
+                          if (text === '' || (num >= 0 && num <= 10)) {
+                            setRating(text);
+                          }
+                        }
+                      }}
+                      placeholder="0.0"
+                      keyboardType="decimal-pad"
+                      maxLength={4}
+                    />
+                    <Text style={styles.ratingMaxText}>/ 10.0</Text>
+                  </View>
+                </View>
 
                 <View style={styles.modalButtons}>
                   <TouchableOpacity
@@ -245,5 +277,36 @@ const styles = StyleSheet.create({
   },
   disabledButtonText: {
     color: '#ccc',
+  },
+  ratingContainer: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  ratingLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  ratingInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  ratingInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    width: 70,
+    textAlign: 'center',
+  },
+  ratingMaxText: {
+    fontSize: 18,
+    color: '#666',
+    marginLeft: 8,
   },
 });

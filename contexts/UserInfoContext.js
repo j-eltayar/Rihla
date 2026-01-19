@@ -117,6 +117,16 @@ export const AppDataProvider = ({ children, initialUserInfo }) => {
     }
   };
 
+  const reorderLocations = (listId, reorderedLocations) => {
+    // Update the order of locations for a specific list
+    setLocations(prev => {
+      // Keep locations from other lists unchanged
+      const otherLocations = prev.filter(loc => loc.listId !== listId);
+      // Combine with reordered locations for this list
+      return [...otherLocations, ...reorderedLocations];
+    });
+  };
+
   const getLocationsByListId = (listId) => {
     return locations.filter(loc => loc.listId === listId);
   };
@@ -156,6 +166,7 @@ export const AppDataProvider = ({ children, initialUserInfo }) => {
     addLocation,
     updateLocation,
     deleteLocation,
+    reorderLocations,
     getLocationsByListId,
     
     // Reference data

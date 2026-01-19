@@ -147,7 +147,7 @@ export default function EditListModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: selectedColor }]}
                 onPress={onSaveEdit}
               >
                 <Text style={styles.createButtonText}>Save</Text>

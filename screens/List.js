@@ -90,7 +90,7 @@ const SwipeableListItem = ({ item, onEdit, onDelete, onPress, openItemId, setOpe
     <View style={styles.swipeContainer}>
       <View style={styles.swipeActions}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
+          style={[styles.actionButton, styles.editButton, { backgroundColor: item.color }]}
           onPress={() => {
             setOpenItemId(null);
             setTimeout(() => onEdit(item), 300);
