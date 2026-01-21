@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "For Rania 💖",
+    "slug": "for-rania",
+    "version": "1.0.3",
+    "orientation": "portrait",
+    "icon": "./assets/turtle.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.jpeg",
+      "resizeMode": "cover",
+      "backgroundColor": "#FFB6C1"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jameseltayar.forrania",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.yourname.forrania"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f732967e-1e5f-4ecb-b3e5-9f73ead3a963"
+      }
+    }
+  }
+}
