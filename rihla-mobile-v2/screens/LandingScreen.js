@@ -5,15 +5,27 @@ import { useMusic } from '../contexts/MusicContext';
 export default function LandingScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [password, setPassword] = useState('');
+  const [selectedSection, setSelectedSection] = useState(null);
   const { isPlaying, togglePlayPause, skipToNext } = useMusic();
 
+  const handleRaniaPress = () => {
+    setSelectedSection('rania');
+    setShowPasswordModal(true);
+    setPassword('');
+  };
+
   const handleJamesPress = () => {
+    setSelectedSection('james');
     setShowPasswordModal(true);
     setPassword('');
   };
 
   const handlePasswordSubmit = () => {
-    if (password === 'hellojames1') {
+    if (selectedSection === 'rania' && password.toLowerCase() === 'stella') {
+      setShowPasswordModal(false);
+      setPassword('');
+      navigation.navigate('RaniaMenu');
+    } else if (selectedSection === 'james' && password === 'hellojames1') {
       setShowPasswordModal(false);
       setPassword('');
       navigation.navigate('JamesMenu');
@@ -21,6 +33,14 @@ export default function LandingScreen({ navigation }) {
       Alert.alert('Incorrect Password', 'Please try again.');
       setPassword('');
     }
+  };
+
+  const getModalTitle = () => {
+    return selectedSection === 'rania' ? 'For Rania' : 'For James';
+  };
+
+  const getPasswordHint = () => {
+    return selectedSection === 'rania' ? "Hint: Your dog's name (lowercase)" : '';
   };
 
   return (
@@ -33,12 +53,12 @@ export default function LandingScreen({ navigation }) {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.card, styles.raniaCard]}
-          onPress={() => navigation.navigate('RaniaMenu')}
+          onPress={handleRaniaPress}
           activeOpacity={0.8}
         >
-          <Text style={styles.cardEmoji}>💖</Text>
+          <Text style={styles.cardEmoji}>❤️</Text>
           <Text style={styles.cardTitle}>For Rania</Text>
-          <Text style={styles.cardSubtitle}>A collection just for you</Text>
+          <Text style={styles.cardSubtitle}>Password required</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -91,7 +111,10 @@ export default function LandingScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Enter Password</Text>
-            <Text style={styles.modalSubtitle}>For James section</Text>
+            <Text style={styles.modalSubtitle}>{getModalTitle()} section</Text>
+            {getPasswordHint() && (
+              <Text style={styles.passwordHint}>{getPasswordHint()}</Text>
+            )}
             
             <TextInput
               style={styles.passwordInput}
@@ -296,6 +319,14 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  passwordHint: {
+    fontSize: 13,
+    color: '#9C27B0',
+    fontStyle: 'italic',
+    fontWeight: '500',
     marginBottom: 24,
     textAlign: 'center',
   },
