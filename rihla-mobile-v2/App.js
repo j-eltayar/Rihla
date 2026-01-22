@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { ProgressProvider } from './contexts/ProgressContext';
+import { MusicProvider } from './contexts/MusicContext';
 import LandingScreen from './screens/LandingScreen';
 import RaniaMenuScreen from './screens/RaniaMenuScreen';
 import JamesMenuScreen from './screens/JamesMenuScreen';
@@ -13,6 +14,8 @@ import MessagesScreen from './screens/MessagesScreen';
 import NotesScreen from './screens/NotesScreen';
 import RemindersScreen from './screens/RemindersScreen';
 import CFAPrepScreen from './screens/CFAPrepScreen';
+import YourFaultsScreen from './screens/YourFaultsScreen';
+import HardDayScreen from './screens/HardDayScreen';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -51,26 +54,30 @@ export default function App() {
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <ProgressProvider>
-        <NavigationContainer>
-          <Stack.Navigator
-            initialRouteName="Landing"
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="Landing" component={LandingScreen} />
-            <Stack.Screen name="RaniaMenu" component={RaniaMenuScreen} />
-            <Stack.Screen name="JamesMenu" component={JamesMenuScreen} />
-            <Stack.Screen name="WhyILoveYou" component={HomeScreen} />
-            <Stack.Screen name="Detail" component={DetailScreen} />
-            <Stack.Screen name="Messages" component={MessagesScreen} />
-            <Stack.Screen name="CFAPrep" component={CFAPrepScreen} />
-            <Stack.Screen name="Notes" component={NotesScreen} />
-            <Stack.Screen name="Reminders" component={RemindersScreen} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </ProgressProvider>
+      <MusicProvider>
+        <ProgressProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName="Landing"
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              <Stack.Screen name="Landing" component={LandingScreen} />
+              <Stack.Screen name="RaniaMenu" component={RaniaMenuScreen} />
+              <Stack.Screen name="JamesMenu" component={JamesMenuScreen} />
+              <Stack.Screen name="WhyILoveYou" component={HomeScreen} />
+              <Stack.Screen name="Detail" component={DetailScreen} />
+              <Stack.Screen name="Messages" component={MessagesScreen} />
+              <Stack.Screen name="CFAPrep" component={CFAPrepScreen} />
+              <Stack.Screen name="YourFaults" component={YourFaultsScreen} />
+              <Stack.Screen name="HardDay" component={HardDayScreen} />
+              <Stack.Screen name="Notes" component={NotesScreen} />
+              <Stack.Screen name="Reminders" component={RemindersScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </ProgressProvider>
+      </MusicProvider>
     </View>
   );
 }

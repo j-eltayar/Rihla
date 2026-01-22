@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { useMusic } from '../contexts/MusicContext';
 
 export default function LandingScreen({ navigation }) {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [password, setPassword] = useState('');
+  const { isPlaying, togglePlayPause, skipToNext } = useMusic();
 
   const handleJamesPress = () => {
     setShowPasswordModal(true);
@@ -48,6 +50,36 @@ export default function LandingScreen({ navigation }) {
           <Text style={styles.cardTitle}>For James</Text>
           <Text style={styles.cardSubtitle}>Password required</Text>
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.musicControls}>
+        <Text style={styles.musicControlsTitle}>Music Controls 🎵</Text>
+        <View style={styles.controlButtons}>
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={togglePlayPause}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.controlButtonText}>
+              {isPlaying ? '⏸ Pause' : '▶️ Play'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={skipToNext}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.controlButtonText}>⏭ Next</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.musicNote}>
+        <Text style={styles.musicNoteEmoji}>🎵</Text>
+        <Text style={styles.musicNoteText}>
+          P.S. Turn up the volume and guess where this song is from 😉
+        </Text>
       </View>
 
       <Modal
@@ -164,6 +196,75 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#666',
     fontWeight: '400',
+  },
+  musicControls: {
+    marginHorizontal: 24,
+    marginBottom: 20,
+    backgroundColor: '#F3E5F5',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#E1BEE7',
+    shadowColor: '#9C27B0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  musicControlsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#6A1B9A',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  controlButton: {
+    flex: 1,
+    backgroundColor: '#9C27B0',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  controlButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  musicNote: {
+    marginHorizontal: 24,
+    marginBottom: 40,
+    backgroundColor: '#E8F4F8',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#B3E5FC',
+    shadowColor: '#4FC3F7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  musicNoteEmoji: {
+    fontSize: 28,
+    marginRight: 12,
+  },
+  musicNoteText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#0277BD',
+    fontWeight: '600',
+    lineHeight: 20,
   },
   modalOverlay: {
     flex: 1,

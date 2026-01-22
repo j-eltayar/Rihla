@@ -46,6 +46,22 @@ export default function RaniaMenuScreen({ navigation }) {
       color: '#E8F0E3',
       onPress: () => navigation.navigate('CFAPrep'),
     },
+    {
+      id: 'yourFaults',
+      title: 'Your Faults',
+      emoji: '🥰',
+      description: 'Self explnanatory :)',
+      color: '#FFF0E6',
+      onPress: () => navigation.navigate('YourFaults'),
+    },
+    {
+      id: 'hardDay',
+      title: 'For a Hard Day',
+      emoji: '🤗',
+      description: 'When you need a little comfort',
+      color: '#E3F0FF',
+      onPress: () => navigation.navigate('HardDay'),
+    },
   ];
 
   // Auto-scroll carousel every 3 seconds
