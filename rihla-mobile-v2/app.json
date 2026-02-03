@@ -2,7 +2,7 @@
   "expo": {
     "name": "For Rania 💖",
     "slug": "for-rania",
-    "version": "1.0.5",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/turtle.png",
     "userInterfaceStyle": "light",

@@ -62,6 +62,14 @@ export default function RaniaMenuScreen({ navigation }) {
       color: '#E3F0FF',
       onPress: () => navigation.navigate('HardDay'),
     },
+    {
+      id: 'morocco',
+      title: 'Morocco',
+      emoji: '🇲🇦',
+      description: 'The most amazing parts of your home',
+      color: '#FFE8E8',
+      onPress: () => navigation.navigate('Morocco'),
+    },
   ];
 
   // Auto-scroll carousel every 3 seconds

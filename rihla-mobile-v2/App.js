@@ -16,6 +16,7 @@ import RemindersScreen from './screens/RemindersScreen';
 import CFAPrepScreen from './screens/CFAPrepScreen';
 import YourFaultsScreen from './screens/YourFaultsScreen';
 import HardDayScreen from './screens/HardDayScreen';
+import MoroccoScreen from './screens/MoroccoScreen';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -72,6 +73,7 @@ export default function App() {
               <Stack.Screen name="CFAPrep" component={CFAPrepScreen} />
               <Stack.Screen name="YourFaults" component={YourFaultsScreen} />
               <Stack.Screen name="HardDay" component={HardDayScreen} />
+              <Stack.Screen name="Morocco" component={MoroccoScreen} />
               <Stack.Screen name="Notes" component={NotesScreen} />
               <Stack.Screen name="Reminders" component={RemindersScreen} />
             </Stack.Navigator>
