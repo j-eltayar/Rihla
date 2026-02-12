@@ -23,6 +23,14 @@ export default function RaniaMenuScreen({ navigation }) {
 
   const menuItems = [
     {
+      id: 'valentines',
+      title: "Valentine's Day",
+      emoji: '💝',
+      description: 'A special day for us',
+      color: '#FFE6F0',
+      onPress: () => navigation.navigate('Valentines'),
+    },
+    {
       id: 'whyILoveYou',
       title: 'Why I Love You',
       emoji: '💕',
@@ -37,14 +45,6 @@ export default function RaniaMenuScreen({ navigation }) {
       description: 'Little notes just for you',
       color: '#E8E3F0',
       onPress: () => navigation.navigate('Messages'),
-    },
-    {
-      id: 'cfaprep',
-      title: 'CFA Prep',
-      emoji: '📚',
-      description: 'Study materials and resources',
-      color: '#E8F0E3',
-      onPress: () => navigation.navigate('CFAPrep'),
     },
     {
       id: 'yourFaults',
