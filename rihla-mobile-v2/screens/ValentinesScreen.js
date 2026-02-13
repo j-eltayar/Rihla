@@ -10,27 +10,27 @@ export default function ValentinesScreen({ navigation }) {
   const [countdown, setCountdown] = useState('');
   const [isValentinesDay, setIsValentinesDay] = useState(false);
 
-  // Check if it's Valentine's Day or after in Dubai timezone (UTC+4)
+  // Check if it's Valentine's Day or after in Milan timezone (UTC+1)
   useEffect(() => {
     const checkDate = () => {
       const now = new Date();
       
-      // Get Dubai time offset (UTC+4 = 240 minutes)
-      const dubaiOffset = 4 * 60; // minutes
+      // Get Milan time offset (UTC+1 = 60 minutes)
+      const milanOffset = 1 * 60; // minutes
       const localOffset = now.getTimezoneOffset(); // minutes from UTC
-      const totalOffset = dubaiOffset + localOffset; // total difference in minutes
+      const totalOffset = milanOffset + localOffset; // total difference in minutes
       
-      // Create Dubai time
-      const dubaiTime = new Date(now.getTime() + totalOffset * 60 * 1000);
+      // Create Milan time
+      const milanTime = new Date(now.getTime() + totalOffset * 60 * 1000);
       
-      // Valentine's Day 2026 at midnight Dubai time
+      // Valentine's Day 2026 at midnight Milan time
       const valentinesThisYear = new Date(2026, 1, 14, 0, 0, 0, 0); // Feb 14, 2026
       
-      if (dubaiTime >= valentinesThisYear) {
+      if (milanTime >= valentinesThisYear) {
         setIsValentinesDay(true);
       } else {
         // Calculate countdown
-        const diff = valentinesThisYear - dubaiTime;
+        const diff = valentinesThisYear - milanTime;
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
