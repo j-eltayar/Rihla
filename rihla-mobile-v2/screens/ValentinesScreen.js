@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Image, FlatList } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Dimensions, Image, FlatList, Modal } from 'react-native';
 import { Video } from 'expo-av';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -9,6 +9,7 @@ export default function ValentinesScreen({ navigation }) {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [countdown, setCountdown] = useState('');
   const [isValentinesDay, setIsValentinesDay] = useState(false);
+  const [showResponseModal, setShowResponseModal] = useState(false);
 
   // Check if it's Valentine's Day or after in Milan timezone (UTC+1)
   useEffect(() => {
@@ -255,10 +256,51 @@ export default function ValentinesScreen({ navigation }) {
             resizeMode="cover"
           />
           <Text style={styles.bottomMessage}>
-            Happy Valentine's Day, my love. Every moment with you is a gift, and I'm so grateful to call you mine. Here's to many more Valentine's Days together. 💕
+            Happy Valentine's Day, my love. Every moment with you is a gift, and I'm so grateful to ask you to be my valentine. Here's to hopefully many more Valentine's Days together. On verra💕
           </Text>
         </View>
+
+        {/* Valentine Question */}
+        <View style={styles.questionCard}>
+          <Text style={styles.questionEmoji}>💍</Text>
+          <Text style={styles.questionText}>Will you be my Valentine?</Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.yesButton}
+              onPress={() => setShowResponseModal(true)}
+            >
+              <Text style={styles.yesButtonText}>Yes</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.yesBlueButton}
+              onPress={() => setShowResponseModal(true)}
+            >
+              <Text style={styles.yesBlueButtonText}>Yes but in blue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
+
+      {/* Response Modal */}
+      <Modal
+        visible={showResponseModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowResponseModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.responseModalContent}>
+            <Text style={styles.responseEmoji}>🎉💕</Text>
+            <Text style={styles.responseTitle}>Yallah Jib!</Text>
+            <TouchableOpacity
+              style={styles.responseButton}
+              onPress={() => setShowResponseModal(false)}
+            >
+              <Text style={styles.responseButtonText}>Close 💝</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -547,5 +589,118 @@ const styles = StyleSheet.create({
     color: '#E91E63',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  questionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 32,
+    marginTop: 20,
+    alignItems: 'center',
+    shadowColor: '#FF1744',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 2,
+    borderColor: '#FFE6EB',
+  },
+  questionEmoji: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  questionText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#C62828',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  yesButton: {
+    backgroundColor: '#FF1744',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 20,
+    shadowColor: '#FF1744',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    minWidth: 120,
+  },
+  yesButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  yesBlueButton: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 20,
+    shadowColor: '#2196F3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+    minWidth: 120,
+  },
+  yesBlueButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  responseModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+    width: '85%',
+    maxWidth: 400,
+  },
+  responseEmoji: {
+    fontSize: 72,
+    marginBottom: 20,
+  },
+  responseTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#FF1744',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  responseButton: {
+    backgroundColor: '#E91E63',
+    paddingHorizontal: 40,
+    paddingVertical: 18,
+    borderRadius: 20,
+    shadowColor: '#E91E63',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  responseButtonText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
   },
 });
