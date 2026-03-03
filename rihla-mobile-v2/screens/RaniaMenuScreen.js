@@ -31,6 +31,14 @@ export default function RaniaMenuScreen({ navigation }) {
       onPress: () => navigation.navigate('Valentines'),
     },
     {
+      id: 'whatToEat',
+      title: 'What do I wanna eat',
+      emoji: '🍽️',
+      description: 'Find out what to eat',
+      color: '#FFF8E1',
+      onPress: () => navigation.navigate('WhatToEat'),
+    },
+    {
       id: 'whyILoveYou',
       title: 'Why I Love You',
       emoji: '💕',

@@ -17,6 +17,7 @@ import YourFaultsScreen from './screens/YourFaultsScreen';
 import HardDayScreen from './screens/HardDayScreen';
 import MoroccoScreen from './screens/MoroccoScreen';
 import ValentinesScreen from './screens/ValentinesScreen';
+import WhatToEatScreen from './screens/WhatToEatScreen';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -71,6 +72,7 @@ export default function App() {
               <Stack.Screen name="Detail" component={DetailScreen} />
               <Stack.Screen name="Messages" component={MessagesScreen} />
               <Stack.Screen name="Valentines" component={ValentinesScreen} />
+              <Stack.Screen name="WhatToEat" component={WhatToEatScreen} />
               <Stack.Screen name="YourFaults" component={YourFaultsScreen} />
               <Stack.Screen name="HardDay" component={HardDayScreen} />
               <Stack.Screen name="Morocco" component={MoroccoScreen} />
