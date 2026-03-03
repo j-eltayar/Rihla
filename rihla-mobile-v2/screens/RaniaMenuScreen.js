@@ -39,6 +39,14 @@ export default function RaniaMenuScreen({ navigation }) {
       onPress: () => navigation.navigate('WhatToEat'),
     },
     {
+      id: 'drivingLessons',
+      title: 'Driving Lessons',
+      emoji: '🚗',
+      description: 'Track your driving progress',
+      color: '#E3F2FD',
+      onPress: () => navigation.navigate('DrivingLessons'),
+    },
+    {
       id: 'whyILoveYou',
       title: 'Why I Love You',
       emoji: '💕',
